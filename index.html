@@ -178,6 +178,32 @@
   }
   .nav-back.hide { display: none; }
 
+  /* 右上角用户标识 */
+  .user-badge {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; font-size: 12px; color: #fff;
+    background: rgba(255,255,255,0.18); border-radius: 14px; padding: 3px 9px 3px 3px;
+  }
+  .user-badge.show { display: inline-flex; }
+  .user-badge .ua-av {
+    width: 20px; height: 20px; border-radius: 50%; margin-right: 6px;
+    background: #fff; color: var(--primary); font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 11px;
+    overflow: hidden;
+  }
+  .user-badge .ua-av img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 实时数据角标 */
+  .badge-live { font-size: 10px; color: #07c160; background: #e7f8ee; border-radius: 4px; padding: 1px 6px; margin-right: 8px; }
+
+  /* loading 动效 */
+  .loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px 0; color: var(--text-3); font-size: 13px; }
+  .spinner {
+    width: 18px; height: 18px; border: 2px solid #d9e8df; border-top-color: var(--primary);
+    border-radius: 50%; animation: spin .7s linear infinite; display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* 城市选择页 */
   .city-hero { text-align: center; padding: 26px 0 22px; }
   .city-hero-title { font-size: 19px; font-weight: 700; color: var(--text-1); }
@@ -200,12 +226,14 @@
   .city-card .c-meta { font-size: 11px; color: var(--text-3); line-height: 1.6; }
   .city-card .c-go { font-size: 12px; color: var(--primary); margin-top: 8px; font-weight: 600; }
 </style>
+<script src="https://lf-cdn-tos.bytescm.com/obj/static/ot-fe/lark-js-sdk/tt-0.0.23.js"></script>
 </head>
 <body>
 <div class="phone">
   <div class="navbar">
     <span class="nav-back" id="nav-back" onclick="backToCity()">‹ 城市</span>
     <span id="nav-title">店员蜜蜂扫码进展</span>
+    <span class="user-badge" id="user-badge"></span>
   </div>
 
   <!-- 城市选择页 -->
@@ -255,11 +283,12 @@
     </div>
 
     <div class="meta-row">
-      <span class="badge-mock">演示数据</span>
+      <span class="badge-mock" id="src-badge">演示数据</span>
       <span class="meta-time" id="meta-time"></span>
     </div>
 
     <div class="count-row" id="count-row"></div>
+    <div id="loading" class="loading" style="display:none"><span class="spinner"></span>数据加载中…</div>
     <div id="list"></div>
 
     <div class="footer">数据来源：抖音生活服务 · 店员蜜蜂扫码实时进展（Aeolus）</div>
@@ -533,12 +562,15 @@ function selectCity(i){
   document.getElementById('nav-back').classList.remove('hide');
   document.getElementById('screen-city').style.display = 'none';
   document.getElementById('screen-query').style.display = 'block';
-  // 重置筛选与搜索，回到默认 Tab
   resetFilter();
   clearSearch();
-  switchTab('detail');
+  state.tab = 'detail';
+  document.getElementById('tab-detail').classList.add('on');
+  document.getElementById('tab-summary').classList.remove('on');
+  document.getElementById('tab-highsales').classList.remove('on');
+  updateSearchHint();
   document.getElementById('screen-query').scrollTop = 0;
-  // 真实接入时：按 currentCity.dashboardId / appId / sheetId 调用后端代理取数
+  loadCityData(currentCity);
 }
 function backToCity(){
   document.getElementById('screen-query').style.display = 'none';
@@ -547,7 +579,59 @@ function backToCity(){
   document.getElementById('nav-back').classList.add('hide');
 }
 
+// ---- 飞书身份鉴权 ----
+const BITABLE_APP_TOKEN = 'NEeMbt9PTat8tMsjTpGcVH4Dnlf';
+const LARK_APP_ID = 'cli_aabfbe06ae789ce1';
+function inLark(){
+  const ua = (navigator.userAgent||'').toLowerCase();
+  return !!(window.h5sdk||window.tt) && (ua.includes('lark')||ua.includes('feishu')||!!window.h5sdk);
+}
+function setUser(name){
+  const el = document.getElementById('user-badge');
+  el.innerHTML = `<span class="ua-av">${(name||'登').charAt(0)}</span>${name||'已登录'}`;
+  el.classList.add('show');
+}
+// 飞书 JSAPI 免登：h5sdk.ready → tt.requestAuthCode 拿 code，真实场景需后端用 code 换取用户信息
+function larkAuth(){
+  if(!inLark()||!window.h5sdk){ setUser('演示用户'); return; }
+  try{
+    window.h5sdk.ready(function(){
+      tt.requestAuthCode({ appId: LARK_APP_ID,
+        success: function(){ setUser('飞书用户'); },
+        fail: function(){ setUser('已登录'); } });
+    });
+    window.h5sdk.error && window.h5sdk.error(function(){ setUser('演示用户'); });
+  }catch(e){ setUser('演示用户'); }
+}
+
+// ---- 多维表格实时数据（loading + fallback）----
+function showLoading(b){
+  document.getElementById('loading').style.display = b ? 'flex' : 'none';
+  document.getElementById('list').style.display = b ? 'none' : 'block';
+}
+function setDataSource(live){
+  const b = document.getElementById('src-badge');
+  b.textContent = live ? '实时数据' : '演示数据';
+  b.className = live ? 'badge-live' : 'badge-mock';
+  const d = new Date(), q = n => n<10?'0'+n:''+n;
+  document.getElementById('meta-time').textContent = `数据更新于 ${d.getMonth()+1}-${q(d.getDate())} ${q(d.getHours())}:${q(d.getMinutes())}`;
+}
+// 按城市读取多维表格（门店明细/BDM汇总/高销门店三表，按城市字段过滤）。
+// 真实接入：多维表格插件用 @lark-base-open/js-sdk；或后端用 tenant_access_token 调
+// bitable/v1/apps/NEeMbt9PTat8tMsjTpGcVH4Dnlf/tables/{tableId}/records（token 不可暴露前端）。
+// 演示阶段无可用令牌 → 主动 fallback 内嵌 mock。
+function fetchCityData(city){
+  return new Promise(function(resolve){ setTimeout(function(){ resolve({live:false}); }, 500); });
+}
+function loadCityData(city){
+  showLoading(true);
+  fetchCityData(city).then(function(r){
+    setDataSource(!!r.live); showLoading(false); render();
+  }).catch(function(){ setDataSource(false); showLoading(false); render(); });
+}
+
 // ---- 启动 ----
+larkAuth();
 document.getElementById('notice').textContent = NOTICE;
 const now = new Date();
 const p = n => n<10?'0'+n:''+n;
