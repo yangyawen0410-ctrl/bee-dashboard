@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>店员蜜蜂扫码核销进展 · 网页预览</title>
+<style>
+  :root {
+    --primary: #07c160;
+    --up: #f5564a;
+    --down: #21a366;
+    --text-1: #1f2329;
+    --text-2: #646a73;
+    --text-3: #8f959e;
+    --bg: #f3f5f7;
+    --card: #ffffff;
+    --border: #eceef1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #e3e6ea;
+    font-family: -apple-system, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-1);
+    font-size: 14px;
+    padding: 24px 12px;
+    -webkit-font-smoothing: antialiased;
+  }
+  /* 手机外壳 */
+  .phone {
+    width: 390px;
+    max-width: 100%;
+    margin: 0 auto;
+    background: var(--bg);
+    border-radius: 28px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.18);
+    overflow: hidden;
+  }
+  .navbar {
+    background: var(--primary);
+    color: #fff;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 14px 0 12px;
+  }
+  .scroll {
+    height: 760px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    padding: 12px 12px 40px;
+  }
+  /* 顶部说明 */
+  .notice {
+    display: flex;
+    background: #fff7e6;
+    border: 1px solid #ffe1a8;
+    border-radius: 8px;
+    padding: 10px 11px;
+    margin-bottom: 10px;
+  }
+  .notice .ico { color: #fa8c16; margin-right: 6px; font-size: 13px; line-height: 19px; }
+  .notice .txt { flex: 1; font-size: 12px; color: #8a5a00; line-height: 19px; }
+
+  /* 筛选 */
+  .filter-bar {
+    display: flex;
+    align-items: stretch;
+    background: var(--card);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .filter-item { flex: 1; padding: 2px 6px; border-right: 1px solid var(--border); }
+  .filter-item .lab { font-size: 11px; color: var(--text-3); margin-bottom: 4px; }
+  .filter-item select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    color: var(--text-2);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .filter-item select.active { color: var(--primary); font-weight: 600; }
+  .filter-reset {
+    display: flex; align-items: center; padding: 0 8px;
+    font-size: 12px; color: var(--text-3); cursor: pointer;
+  }
+
+  /* 搜索框 */
+  .search-hint { font-size: 11px; color: var(--text-3); margin: 2px 2px 6px; }
+  .search-bar {
+    display: flex; align-items: center;
+    background: var(--card);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+  }
+  .search-bar .s-ico { color: var(--text-3); font-size: 14px; margin-right: 6px; }
+  .search-bar input {
+    flex: 1; border: none; outline: none; background: transparent;
+    font-size: 13px; color: var(--text-1);
+  }
+  .search-bar input::placeholder { color: var(--text-3); }
+  .search-bar .s-clear {
+    display: none; color: var(--text-3); font-size: 15px; cursor: pointer;
+    padding: 0 4px; line-height: 1;
+  }
+  .search-bar.has-kw .s-clear { display: block; }
+
+  /* 高销分层标签 */
+  .tier { font-size: 10px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; font-weight: 600; }
+  .tier-3w { background: #fff1f0; color: #cf1322; }
+  .tier-2w { background: #fff7e6; color: #d46b08; }
+  .tier-1w { background: #f6ffed; color: #389e0d; }
+  .tier-other { background: #f2f3f5; color: #8f959e; }
+
+  /* Tab */
+  .tabs { display: flex; background: var(--card); border-radius: 8px; padding: 4px; margin-bottom: 8px; }
+  .tab { flex: 1; text-align: center; padding: 9px 0; font-size: 14px; color: var(--text-2); border-radius: 6px; cursor: pointer; }
+  .tab.on { background: var(--primary); color: #fff; font-weight: 600; }
+
+  .meta-row { display: flex; align-items: center; margin: 2px 2px 8px; }
+  .badge-mock { font-size: 10px; color: #fa8c16; background: #fff3e0; border-radius: 4px; padding: 1px 6px; margin-right: 8px; }
+  .meta-time { font-size: 11px; color: var(--text-3); }
+  .count-row { font-size: 12px; color: var(--text-3); margin: 2px 2px 8px; }
+
+  /* 卡片 */
+  .card { background: var(--card); border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .poi-name { font-size: 15px; font-weight: 600; flex: 1; margin-right: 8px; }
+  .grp-stores { font-size: 12px; color: var(--text-3); }
+
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+  .level-top { background: #fff1f0; color: #cf1322; }
+  .level-high { background: #fff7e6; color: #d46b08; }
+  .level-mid { background: #e6f7ff; color: #0958d9; }
+  .level-low { background: #f6ffed; color: #389e0d; }
+  .level-none { background: #f2f3f5; color: #8f959e; }
+
+  .sub-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+  .sub { font-size: 12px; color: var(--text-2); }
+  .dot { color: var(--text-3); margin: 0 5px; }
+  .count-type { margin-left: auto; color: var(--text-3); }
+
+  .bar-wrap { display: flex; align-items: center; margin-bottom: 9px; }
+  .bar-track { flex: 1; height: 15px; background: #f2f3f5; border-radius: 8px; overflow: hidden; margin-right: 9px; }
+  .bar-track.sm { height: 11px; border-radius: 6px; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, #95e1b8, #07c160); border-radius: 8px; transition: width .3s; }
+  .bar-fill.purple { background: linear-gradient(90deg, #c4b5fd, #8b5cf6); }
+  .bar-num { min-width: 58px; text-align: right; font-size: 14px; font-weight: 600; }
+
+  .kv-row { display: flex; }
+  .kv { flex: 1; display: flex; align-items: baseline; }
+  .kv-label { font-size: 12px; color: var(--text-3); margin-right: 6px; }
+  .kv-val { font-size: 13px; font-weight: 500; }
+  .up { color: var(--up); }
+  .down { color: var(--down); }
+
+  .metric-line { display: flex; align-items: center; margin-bottom: 8px; }
+  .metric-label { width: 72px; font-size: 12px; color: var(--text-2); }
+  .metric-val { min-width: 52px; text-align: right; font-size: 13px; font-weight: 600; margin-left: 9px; }
+
+  .grid { display: flex; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .grid-cell { flex: 1; display: flex; flex-direction: column; align-items: center; }
+  .g-num { font-size: 15px; font-weight: 600; }
+  .g-label { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+
+  .empty { text-align: center; color: var(--text-3); padding: 50px 0; font-size: 13px; }
+  .footer { text-align: center; font-size: 11px; color: var(--text-3); margin-top: 14px; }
+
+  /* 导航栏返回按钮 */
+  .navbar { position: relative; }
+  .nav-back {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; font-weight: 400; cursor: pointer; opacity: .95;
+  }
+  .nav-back.hide { display: none; }
+
+  /* 城市选择页 */
+  .city-hero { text-align: center; padding: 26px 0 22px; }
+  .city-hero-title { font-size: 19px; font-weight: 700; color: var(--text-1); }
+  .city-hero-sub { font-size: 13px; color: var(--text-3); margin-top: 8px; }
+  .city-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .city-card {
+    background: var(--card); border-radius: 12px; padding: 20px 14px;
+    cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid var(--border); transition: transform .15s, box-shadow .15s;
+  }
+  .city-card:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(7,193,96,0.18); border-color: var(--primary); }
+  .city-card .c-top { display: flex; align-items: center; margin-bottom: 10px; }
+  .city-card .c-dot {
+    width: 34px; height: 34px; border-radius: 9px; margin-right: 10px;
+    background: linear-gradient(135deg, #95e1b8, #07c160);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 16px; font-weight: 700;
+  }
+  .city-card .c-name { font-size: 16px; font-weight: 600; color: var(--text-1); }
+  .city-card .c-meta { font-size: 11px; color: var(--text-3); line-height: 1.6; }
+  .city-card .c-go { font-size: 12px; color: var(--primary); margin-top: 8px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="navbar">
+    <span class="nav-back" id="nav-back" onclick="backToCity()">‹ 城市</span>
+    <span id="nav-title">店员蜜蜂扫码进展</span>
+  </div>
+
+  <!-- 城市选择页 -->
+  <div class="scroll" id="screen-city">
+    <div class="city-hero">
+      <div class="city-hero-title">店员蜜蜂扫码核销进展</div>
+      <div class="city-hero-sub">请选择要查看的城市</div>
+    </div>
+    <div class="city-grid" id="city-grid"></div>
+    <div class="footer">数据来源：抖音生活服务 · 店员蜜蜂扫码实时进展（Aeolus）</div>
+  </div>
+
+  <!-- 查询页 -->
+  <div class="scroll" id="screen-query" style="display:none">
+    <div class="notice">
+      <span class="ico">ⓘ</span>
+      <span class="txt" id="notice"></span>
+    </div>
+
+    <div class="search-hint" id="search-hint">可搜索：门店名称 / poi_id / BD姓名</div>
+    <div class="search-bar" id="search-bar">
+      <span class="s-ico">🔍</span>
+      <input id="f-kw" type="text" placeholder="搜索门店名称 / poi_id / BD姓名" oninput="onSearch()" />
+      <span class="s-clear" onclick="clearSearch()">✕</span>
+    </div>
+
+    <div class="filter-bar">
+      <div class="filter-item">
+        <div class="lab">BDM</div>
+        <select id="f-bdm" onchange="onFilter()"></select>
+      </div>
+      <div class="filter-item">
+        <div class="lab">销售(BD)</div>
+        <select id="f-bd" onchange="onFilter()"></select>
+      </div>
+      <div class="filter-item" style="border-right:none">
+        <div class="lab">小组</div>
+        <select id="f-group" onchange="onFilter()"></select>
+      </div>
+      <div class="filter-reset" onclick="resetFilter()">重置</div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" id="tab-detail" onclick="switchTab('detail')">门店明细</div>
+      <div class="tab" id="tab-summary" onclick="switchTab('summary')">BDM 汇总</div>
+      <div class="tab" id="tab-highsales" onclick="switchTab('highsales')">高销门店</div>
+    </div>
+
+    <div class="meta-row">
+      <span class="badge-mock">演示数据</span>
+      <span class="meta-time" id="meta-time"></span>
+    </div>
+
+    <div class="count-row" id="count-row"></div>
+    <div id="list"></div>
+
+    <div class="footer">数据来源：抖音生活服务 · 店员蜜蜂扫码实时进展（Aeolus）</div>
+  </div>
+</div>
+
+<script>
+// ===== 内嵌 mock 数据（来自 server/mock/*.json）=====
+const STORE_DATA = /*STORE_DATA*/[{"poiName": "福人缘饭店", "poiId": "7640715511478618122", "bdm": "烟台-2", "bd": "盖启超", "category": "热门/特色菜", "countType": "单计", "standard": "3000 聚力乘风 问鼎巅峰", "today": 4433.0, "yesterday": 0.0, "delta": 4433.0}, {"poiName": "陶婆盐焗鸡(五龙北路店)", "poiId": "6601154401744734212", "bdm": "烟台-1", "bd": "刘兆慧", "category": "快餐小吃", "countType": "单计", "standard": "1000 低客单-问鼎巅峰", "today": 1656.33, "yesterday": 583.61, "delta": 1072.72}, {"poiName": "熹顺自助小火锅", "poiId": "7628097902300104731", "bdm": "烟台-5", "bd": "吴继阳", "category": "自助餐", "countType": "单计", "standard": "500-达标起步 全力以赴(仅单计)", "today": 1100.2, "yesterday": 758.1, "delta": 342.1}, {"poiName": "金海饭店", "poiId": "7644013915533215786", "bdm": "烟台-2", "bd": "王森", "category": "热门/特色菜", "countType": "单计", "standard": "500-达标起步 全力以赴(仅单计)", "today": 1071.0, "yesterday": 0.0, "delta": 1071.0}, {"poiName": "船小鲜·小船蒸鲜·渔家菜(金沙滩店)", "poiId": "7632738431197513762", "bdm": "烟台-7", "bd": "于佳蓬", "category": "热门/特色菜", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 946.0, "yesterday": 0.0, "delta": 946.0}, {"poiName": "聚福德", "poiId": "6739833391941683214", "bdm": "烟台-5", "bd": "陈相锦", "category": "热门/特色菜", "countType": "单计", "standard": "500-达标起步 全力以赴(仅单计)", "today": 812.0, "yesterday": 4040.0, "delta": -3228.0}, {"poiName": "爱尚鱼", "poiId": "7649579544612964404", "bdm": "烟台-6", "bd": "张壮壮", "category": "地方菜", "countType": "单计", "standard": "500-达标起步 全力以赴(仅单计)", "today": 640.1, "yesterday": 0.0, "delta": 640.1}, {"poiName": "宫太后脱骨凤爪特色小龙虾", "poiId": "7392133728182470695", "bdm": "烟台-5", "bd": "张恒博", "category": "热门/特色菜", "countType": "单计", "standard": "500-达标起步 全力以赴(仅单计)", "today": 600.0, "yesterday": 0.0, "delta": 600.0}, {"poiName": "Oh!耶韩式炸鸡", "poiId": "7642220204281301001", "bdm": "烟台-1", "bd": "刘兆慧", "category": "快餐小吃", "countType": "单计", "standard": "350 低客单-稳步进阶", "today": 422.45, "yesterday": 52.1, "delta": 370.35}, {"poiName": "大杰烧烤", "poiId": "7639196680562165802", "bdm": "烟台-3", "bd": "宋长婷", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 370.0, "yesterday": 0.0, "delta": 370.0}, {"poiName": "牟平区大把抓海鲜烧烤餐厅", "poiId": "7649334053477386290", "bdm": "烟台-2", "bd": "毛振国", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 366.0, "yesterday": 98.0, "delta": 268.0}, {"poiName": "小马扎烧烤(孙家滩店)", "poiId": "7640699605245364266", "bdm": "烟台-1", "bd": "姚子涵", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 356.0, "yesterday": 0.0, "delta": 356.0}, {"poiName": "川城纪(丽金广场店)", "poiId": "7650065874908350464", "bdm": "烟台-3", "bd": "张正鑫", "category": "地方菜", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 343.9, "yesterday": 618.0, "delta": -274.1}, {"poiName": "有点意思拼豆DIY手作店", "poiId": "7645267393954744360", "bdm": "烟台-6", "bd": "王英男", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 286.2, "yesterday": 0.0, "delta": 286.2}, {"poiName": "好运家常菜", "poiId": "7580622037350090786", "bdm": "烟台-2", "bd": "王志强", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 185.0, "yesterday": 0.0, "delta": 185.0}, {"poiName": "壳间拾光", "poiId": "7645967801870223375", "bdm": "烟台-6", "bd": "柳岱均", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 159.7, "yesterday": 227.6, "delta": -67.9}, {"poiName": "辰越养生推拿", "poiId": "7599151715203581967", "bdm": "烟台-7", "bd": "唐日伦", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 149.6, "yesterday": 0.0, "delta": 149.6}, {"poiName": "虾趣小酒馆", "poiId": "7649688968392345635", "bdm": "烟台-6", "bd": "柳岱均", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 98.8, "yesterday": 151.6, "delta": -52.8}, {"poiName": "椒点烤鱼", "poiId": "7637641665691256847", "bdm": "烟台-1", "bd": "王毅斌", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 96.0, "yesterday": 0.0, "delta": 96.0}, {"poiName": "老田拉面(松霞路店)", "poiId": "7636997668543137843", "bdm": "烟台-6", "bd": "王英男", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 89.9, "yesterday": 0.0, "delta": 89.9}, {"poiName": "胖小幺茉莉茶香牛油火锅", "poiId": "7645908033105332276", "bdm": "烟台-3", "bd": "柳成霖", "category": "火锅", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 79.7, "yesterday": 127.7, "delta": -48.0}, {"poiName": "甜芙烘焙", "poiId": "7624920944305244195", "bdm": "烟台-4", "bd": "郭明鑫", "category": "面包甜点", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 61.4, "yesterday": 0.0, "delta": 61.4}, {"poiName": "大帅脆皮手撕烤鸭", "poiId": "7649685062509660200", "bdm": "烟台-5", "bd": "陈相锦", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 59.8, "yesterday": 0.0, "delta": 59.8}, {"poiName": "冷记江西小炒", "poiId": "7649260868869294126", "bdm": "烟台-1", "bd": "魏肇琪", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 58.0, "yesterday": 0.0, "delta": 58.0}, {"poiName": "阿聪膳卤·麻椒鸡(莱山店)", "poiId": "7647330677318223899", "bdm": "烟台-5", "bd": "陈相锦", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 58.0, "yesterday": 0.0, "delta": 58.0}, {"poiName": "李建特色炒鸡", "poiId": "7637086462949492777", "bdm": "烟台-4", "bd": "郭明鑫", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 48.0, "yesterday": 96.0, "delta": -48.0}, {"poiName": "恩旖家饼夹菜", "poiId": "7635107306369222690", "bdm": "烟台-7", "bd": "高峰", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 40.8, "yesterday": 0.0, "delta": 40.8}, {"poiName": "烟台牟平区村花肉脂渣", "poiId": "7650775336694581248", "bdm": "烟台-2", "bd": "董军浩", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 39.9, "yesterday": 116.0, "delta": -76.1}, {"poiName": "拼豆与甜姐姐玩具店", "poiId": "7647431450052003867", "bdm": "烟台-6", "bd": "孙向阳", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 39.9, "yesterday": 0.0, "delta": 39.9}, {"poiName": "梦辰麻辣烫米线", "poiId": "7644915950575159347", "bdm": "烟台-7", "bd": "姜晶", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 36.4, "yesterday": 69.47, "delta": -33.07}, {"poiName": "大理寺过桥米线", "poiId": "7647066394156075023", "bdm": "烟台-4", "bd": "郭凯", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 29.8, "yesterday": 0.0, "delta": 29.8}, {"poiName": "喜家合跷脚牛肉面", "poiId": "7641053923897264179", "bdm": "烟台-3", "bd": "郑宇桐", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 24.9, "yesterday": 45.0, "delta": -20.1}, {"poiName": "园园豆手工坊(三站店)", "poiId": "7646280625226844170", "bdm": "烟台-2", "bd": "刘爽", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 23.9, "yesterday": 0.0, "delta": 23.9}, {"poiName": "菠萝冰", "poiId": "7647501479138068480", "bdm": "烟台-7", "bd": "高峰", "category": "面包甜点", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 21.4, "yesterday": 0.0, "delta": 21.4}, {"poiName": "冰冰酱绵绵冰(银座商城店)", "poiId": "7649637969095362606", "bdm": "烟台-1", "bd": "姚子涵", "category": "面包甜点", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 19.8, "yesterday": 0.0, "delta": 19.8}, {"poiName": "食锦记", "poiId": "7648902435775186950", "bdm": "烟台-4", "bd": "郭明鑫", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 16.9, "yesterday": 67.2, "delta": -50.3}, {"poiName": "鸡柳大人(芝罘新都汇步行街店)", "poiId": "7646712469477394478", "bdm": "烟台-3", "bd": "孙莉", "category": "快餐小吃", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 16.8, "yesterday": 0.0, "delta": 16.8}, {"poiName": "＋1Lykke咖啡店", "poiId": "7587233429331118120", "bdm": "烟台-3", "bd": "柳成霖", "category": "饮品", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 5.99, "yesterday": 0.0, "delta": 5.99}, {"poiName": "焙焙鸭面包工坊", "poiId": "7632951204988848166", "bdm": "烟台-7", "bd": "侯杰", "category": "面包甜点", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 2.88, "delta": -2.88}, {"poiName": "正宗枣庄辣子鸡", "poiId": "7631008887516170286", "bdm": "烟台-3", "bd": "陈红", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "言青山成都火锅(烟台首店)", "poiId": "7644760324045801535", "bdm": "烟台-1", "bd": "姚子涵", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "漾轻餐饮店", "poiId": "7627388007309379624", "bdm": "烟台-3", "bd": "陈红", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "西禾牛排", "poiId": "7632568897794738239", "bdm": "烟台-6", "bd": "谢伟杰", "category": "西餐", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "郝炽地摊火锅烧烤", "poiId": "7641815927712909327", "bdm": "烟台-4", "bd": "陈明鑫", "category": "火锅", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "发财烧烤(长安路店)", "poiId": "7633304755537250319", "bdm": "烟台-1", "bd": "崔宇航", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "张家大院铁锅炖烧烤(总店)", "poiId": "7581046923656562728", "bdm": "烟台-5", "bd": "娄要伟", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "淮南牛肉汤", "poiId": "7266466741679556608", "bdm": "烟台-7", "bd": "于佳蓬", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "谷里香杂粮煎饼", "poiId": "7629608917378533403", "bdm": "烟台-7", "bd": "高峰", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "锅锅香·石锅鸡公煲·黄焖鸡米饭", "poiId": "7630014699769169929", "bdm": "烟台-7", "bd": "于佳蓬", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "titi家烘焙", "poiId": "7627728850732304436", "bdm": "烟台-3", "bd": "郑宇桐", "category": "面包甜点", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "海盗公约", "poiId": "7635506460926937097", "bdm": "烟台-1", "bd": "魏肇琪", "category": "饮品", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "珍德香北京烤鸭", "poiId": "7635518629500422182", "bdm": "烟台-7", "bd": "杨麒珉", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 72.0, "delta": -72.0}, {"poiName": "逃离计划DIY工坊", "poiId": "7649288991723751451", "bdm": "烟台-5", "bd": "刘吉鹏", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "王记生滚粥", "poiId": "7651907636606027816", "bdm": "烟台-5", "bd": "陈相锦", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "王记生滚粥", "poiId": "7651907636606027816", "bdm": "烟台-5", "bd": "陈相锦", "category": "快餐小吃", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "今夜烧烤", "poiId": "7647679489782056966", "bdm": "烟台-5", "bd": "陈相锦", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 718.0, "delta": -718.0}, {"poiName": "爱拼才会赢", "poiId": "7648090258558421033", "bdm": "烟台-1", "bd": "姚子涵", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "冀鲁味道沧州羊肠汤", "poiId": "7644223811306391594", "bdm": "烟台-2", "bd": "王志强", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "12海里COFFEE", "poiId": "7636976396719360036", "bdm": "烟台-1", "bd": "魏肇琪", "category": "饮品", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "陶婆盐焗鸡(五龙北路店)", "poiId": "6601154401744734212", "bdm": "烟台-1", "bd": "刘兆慧", "category": "快餐小吃", "countType": "双计", "standard": "1000 低客单-问鼎巅峰", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "虾多肉多龙虾工厂", "poiId": "7647462523335919650", "bdm": "烟台-6", "bd": "司钰", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "虾灼么·嗨吃88元6斤小龙虾", "poiId": "7647462523335919650", "bdm": "烟台-6", "bd": "司钰", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "溢香城炸肉", "poiId": "7622218616854808582", "bdm": "烟台-3", "bd": "郑宇桐", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "胖小幺茉莉茶香牛油火锅", "poiId": "7645908033105332276", "bdm": "烟台-3", "bd": "柳成霖", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 67.8, "delta": -67.8}, {"poiName": "云庭汇按摩养生SPA", "poiId": "7651148857153161256", "bdm": "烟台-7", "bd": "杨麒珉", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "云庭汇按摩养生SPA", "poiId": "7651148857153161256", "bdm": "烟台-7", "bd": "杨麒珉", "category": "洗浴按摩", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "缦境·养生·按摩", "poiId": "7646309831862650907", "bdm": "烟台-4", "bd": "鲁洋", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "云庭汇按摩馆", "poiId": "7651148857153161256", "bdm": "烟台-7", "bd": "杨麒珉", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "顺恒临沂炒鸡", "poiId": "7626594166486599686", "bdm": "烟台-2", "bd": "阴启薛", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "鲜滋饺子现包水饺(怡河新阁店)", "poiId": "7325307875696314407", "bdm": "烟台-5", "bd": "孙志超", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 599.1, "delta": -599.1}, {"poiName": "耳语采耳", "poiId": "7638488435660949556", "bdm": "烟台-1", "bd": "姚子涵", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "嗨一宝炒饭", "poiId": "7631040386076510260", "bdm": "烟台-3", "bd": "郑宇桐", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "吉维尼咖啡(养马岛店)", "poiId": "7526422064253634575", "bdm": "烟台-2", "bd": "毛振国", "category": "饮品", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "泡面星球电竞人民的网吧", "poiId": "7619215634413160474", "bdm": "烟台-2", "bd": "陈林", "category": "传统娱乐", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "超级大面筋(开发区店)", "poiId": "7549781878325118985", "bdm": "烟台-7", "bd": "唐日伦", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "心享简卡", "poiId": "7643315880713816116", "bdm": "烟台-7", "bd": "谢尧尧", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "正宗东北老式锅包肉", "poiId": "7629277567359174656", "bdm": "烟台-6", "bd": "张壮壮", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "亿碗米线", "poiId": "7649249499860174848", "bdm": "烟台-6", "bd": "郝祥宇", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 432.0, "delta": -432.0}, {"poiName": "古月兰亭足浴", "poiId": "7646350426924664872", "bdm": "烟台-4", "bd": "于万源", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "莱州给自己放个假烧烤俱乐部", "poiId": "7650071289113085979", "bdm": "烟台-6", "bd": "韩端策", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "安徽正宗牛肉板面", "poiId": "7647109631185815587", "bdm": "烟台-2", "bd": "陈广霖", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "食锦记", "poiId": "7648902435775186950", "bdm": "烟台-4", "bd": "郭明鑫", "category": "快餐小吃", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "玉芹馄饨", "poiId": "7603514640877750287", "bdm": "烟台-4", "bd": "于万源", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "舒澜养生会所", "poiId": "7648566753333381146", "bdm": "烟台-6", "bd": "王英男", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "湘味虾橱", "poiId": "7636536871450839078", "bdm": "烟台-2", "bd": "阴启薛", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "胡同里", "poiId": "7642646975494260790", "bdm": "烟台-1", "bd": "杨康", "category": "热门/特色菜", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "胖妈酱肘猪蹄王(莱州店)", "poiId": "7645926371012642859", "bdm": "烟台-6", "bd": "柳广曈", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "临沂炒鸡干烧鱼海鲜家常菜", "poiId": "7630658565170022451", "bdm": "烟台-1", "bd": "高剑峰", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "哈尔滨农大蹄花", "poiId": "7641879649514489906", "bdm": "烟台-3", "bd": "宋长婷", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "砂罐川香阁", "poiId": "7646697666563049472", "bdm": "烟台-2", "bd": "阴启薛", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "虾过瘾龙虾驿站", "poiId": "7646702268930066442", "bdm": "烟台-3", "bd": "张正鑫", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "胖妈酱肘猪蹄王(莱州店)", "poiId": "7645926371012642859", "bdm": "烟台-6", "bd": "柳广曈", "category": "快餐小吃", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "顺泽熟食餐饮", "poiId": "7629225769696233506", "bdm": "烟台-4", "bd": "李严", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "南井洞·创意韩餐(朝阳街店)", "poiId": "7646567813306976266", "bdm": "烟台-2", "bd": "邹广艳", "category": "日韩料理", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "川城纪(丽金广场店)", "poiId": "7650065874908350464", "bdm": "烟台-3", "bd": "张正鑫", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "顺泽熟食餐饮", "poiId": "7629225769696233506", "bdm": "烟台-4", "bd": "郭凯", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "春山本帮浇头面", "poiId": "7635946356724631598", "bdm": "烟台-6", "bd": "柳旭升", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "日日鲜麻辣拌", "poiId": "7636262343411763200", "bdm": "烟台-6", "bd": "王敬远", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "爱麻仕24小时自助棋牌室", "poiId": "7647040812584273970", "bdm": "烟台-4", "bd": "郭明鑫", "category": "推理/桌游", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "崔友财蹄蛙火锅(龙口店)", "poiId": "7645540385426835491", "bdm": "烟台-4", "bd": "郭凯", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "焱炎烧烤", "poiId": "7646401023071291407", "bdm": "烟台-2", "bd": "王森", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "园园豆", "poiId": "7646280625226844170", "bdm": "烟台-2", "bd": "刘爽", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "800海里渔家菜(烟台山店)", "poiId": "7638340905779103796", "bdm": "烟台-2", "bd": "邹广艳", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 195.0, "delta": -195.0}, {"poiName": "椒点烤鱼", "poiId": "7637641665691256847", "bdm": "烟台-1", "bd": "王毅斌", "category": "百货商超", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "日日鲜麻辣拌", "poiId": "7636262343411763200", "bdm": "烟台-6", "bd": "王敬远", "category": "快餐小吃", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "红桃七美蛙鱼潜江小龙虾(天府小区店)", "poiId": "7649604484800186408", "bdm": "烟台-6", "bd": "吕岐伟", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "盖记鱼馅(幸福河市场店)", "poiId": "6630745820331247623", "bdm": "烟台-2", "bd": "刘爽", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "半日闲爱拼·豆有趣", "poiId": "7648178045169190939", "bdm": "烟台-1", "bd": "马强", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "艳九香北纬45度现烤牛肉干", "poiId": "7645082203642136630", "bdm": "烟台-1", "bd": "刘兆慧", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 78.0, "delta": -78.0}, {"poiName": "劉记炒鸡大串烧烤", "poiId": "7633992583655458867", "bdm": "烟台-6", "bd": "王敬远", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "爱啤士精酿(南山店)", "poiId": "7641128695197648948", "bdm": "烟台-4", "bd": "郭明鑫", "category": "酒吧", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "清澜精酿啤酒屋", "poiId": "7631811786949756968", "bdm": "烟台-6", "bd": "赵颖", "category": "酒吧", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "澜仙湾海鲜自助", "poiId": "7646626565841029120", "bdm": "烟台-7", "bd": "徐鋆代", "category": "自助餐", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 205.0, "delta": -205.0}, {"poiName": "木清豆舍", "poiId": "7652271317059799083", "bdm": "烟台-6", "bd": "谢伟杰", "category": "DIY手工坊", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "嘎嘎香麻辣烫", "poiId": "7643686575141816339", "bdm": "烟台-6", "bd": "郝祥宇", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "木清豆舍", "poiId": "7652271317059799083", "bdm": "烟台-6", "bd": "谢伟杰", "category": "DIY手工坊", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 33.8, "delta": -33.8}, {"poiName": "熹·西塔炭火烤肉", "poiId": "7628525529913624627", "bdm": "烟台-3", "bd": "宋长婷", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "莹饱饱小学生私房美食", "poiId": "7624352336315418660", "bdm": "烟台-6", "bd": "孙向阳", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "郁师傅专业修脚足疗推拿", "poiId": "7643027341181978666", "bdm": "烟台-2", "bd": "王志强", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "竹所趣浪店·燕窝·咖啡·清茶·简餐", "poiId": "7644053393710778411", "bdm": "烟台-1", "bd": "魏肇琪", "category": "饮品", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "壹號酒吧", "poiId": "7647770561946322954", "bdm": "烟台-6", "bd": "王敬远", "category": "酒吧", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "兰州牛肉拉面", "poiId": "7536713932417796139", "bdm": "烟台-6", "bd": "柳广曈", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "漫境SPA养生会所", "poiId": "7651160625430661139", "bdm": "烟台-7", "bd": "徐鋆代", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "花饽饽锦钰花样饽饽(035号店)", "poiId": "7648825911713728521", "bdm": "烟台-3", "bd": "郑宇桐", "category": "面包甜点", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 180.0, "delta": -180.0}, {"poiName": "大碗湘湖南土菜馆", "poiId": "7638864552725874742", "bdm": "烟台-1", "bd": "崔宇航", "category": "地方菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "炫田炉歌·蹄蛙火锅(招远店)", "poiId": "7647751530940303423", "bdm": "烟台-3", "bd": "赵清康", "category": "火锅", "countType": "双计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 173.6, "delta": -173.6}, {"poiName": "胖丫烧烤", "poiId": "7631850162024876042", "bdm": "烟台-2", "bd": "董军浩", "category": "热门/特色菜", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "君悦足道 SPA", "poiId": "7647021591892592678", "bdm": "烟台-6", "bd": "王敬远", "category": "洗浴按摩", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}, {"poiName": "卢师傅牛肉汤", "poiId": "7643413971759794191", "bdm": "烟台-5", "bd": "梁国斌", "category": "快餐小吃", "countType": "单计", "standard": "热血满腔 拼搏何妨", "today": 0.0, "yesterday": 0.0, "delta": 0.0}]/*STORE_DATA_END*/;
+const SUMMARY_DATA = /*SUMMARY_DATA*/[{"group": "烟台-5", "storeCount": 11, "activeStores": 5, "activeRate": 0.4545, "today": 2630.0, "yesterday": 6115.2, "delta": -3485.2, "standardStores": 3, "standardRate": 0.6}, {"group": "烟台-2", "storeCount": 20, "activeStores": 6, "activeRate": 0.3, "today": 6118.8, "yesterday": 409.0, "delta": 5709.8, "standardStores": 2, "standardRate": 0.3333}, {"group": "烟台-6", "storeCount": 24, "activeStores": 6, "activeRate": 0.25, "today": 1314.6, "yesterday": 845.0, "delta": 469.6, "standardStores": 1, "standardRate": 0.1667}, {"group": "烟台-1", "storeCount": 18, "activeStores": 6, "activeRate": 0.3333, "today": 2608.58, "yesterday": 713.71, "delta": 1894.87, "standardStores": 1, "standardRate": 0.1667}, {"group": "烟台-7", "storeCount": 15, "activeStores": 5, "activeRate": 0.3333, "today": 1194.2, "yesterday": 349.35, "delta": 844.85, "standardStores": 1, "standardRate": 0.2}, {"group": "烟台-3", "storeCount": 17, "activeStores": 6, "activeRate": 0.3529, "today": 841.29, "yesterday": 1490.1, "delta": -648.81, "standardStores": 0, "standardRate": 0.0}, {"group": "烟台-4", "storeCount": 12, "activeStores": 4, "activeRate": 0.3333, "today": 156.1, "yesterday": 163.2, "delta": -7.1, "standardStores": 0, "standardRate": 0.0}]/*SUMMARY_DATA_END*/;
+
+const NOTICE = '店员蜜蜂的达成按店员维度统计，最准的数据请看店员"抖推赚"界面。本看板为门店维度达成，会比店员个人维度偏大，仅供参考。快餐小吃 / 面包甜点 / 饮品须为认领了低客单行业任务的门店，可看 200 / 350 / 500 / 1000 的达标。';
+
+// 高销门店 mock（对应看板 chart 16027249 / sheetId 2488839；字段：核销poi名称、核销poi_id、BDM、销售名称、单双计、高销分层、今日扫码）
+const HIGHSALES_DATA = [
+  {"poiName":"古法配穴艾灸馆","poiId":"7509691343150778380","bdm":"烟台-2","bd":"秦国庆","countType":"双计","tier":"3w+","today":4981},
+  {"poiName":"星澜养生(芝罘区店)","poiId":"7632213235344771124","bdm":"烟台-1","bd":"杨东民","countType":"双计","tier":"3w+","today":4944},
+  {"poiName":"欢乐牧场烧烤涮自助","poiId":"7400568637469231113","bdm":"烟台-1","bd":"刘永强","countType":"双计","tier":"3w+","today":3822},
+  {"poiName":"福人缘饭店","poiId":"7640715511478618122","bdm":"烟台-2","bd":"盖启超","countType":"单计","tier":"3w+","today":3610},
+  {"poiName":"渔家傲海鲜大酒店","poiId":"7521903448120553219","bdm":"烟台-5","bd":"吴继阳","countType":"双计","tier":"2w+","today":2870},
+  {"poiName":"老烟台炉包(南大街店)","poiId":"7488120553219008441","bdm":"烟台-3","bd":"于佳蓬","countType":"单计","tier":"2w+","today":2455},
+  {"poiName":"金沙滩温泉度假村","poiId":"7466219008441120553","bdm":"烟台-7","bd":"王森","countType":"双计","tier":"2w+","today":2103},
+  {"poiName":"蓬莱小面(开发区店)","poiId":"7433150778380691343","bdm":"烟台-6","bd":"孙向阳","countType":"单计","tier":"1w+","today":1788},
+  {"poiName":"海阳大樱桃采摘园","poiId":"7411478618122071551","bdm":"烟台-4","bd":"刘兆慧","countType":"双计","tier":"1w+","today":1456},
+  {"poiName":"莱阳梨膏老字号","poiId":"7399231113405686374","bdm":"烟台-3","bd":"张壮壮","countType":"单计","tier":"1w+","today":1280},
+  {"poiName":"龙口粉丝煲专门店","poiId":"7388380691343150778","bdm":"烟台-2","bd":"梁国斌","countType":"单计","tier":"1w+","today":1102},
+  {"poiName":"招远黄金海岸渔府","poiId":"7377469231113405686","bdm":"烟台-5","bd":"杨康","countType":"双计","tier":"1w+","today":1035}
+];
+
+let state = { tab: 'detail', bdm: '', bd: '', group: '', kw: '' };
+
+// ---- 工具函数 ----
+function num(x){ const n=Number(x); return Number.isFinite(n)?n:0; }
+function fmtInt(x){ return Math.round(num(x)).toLocaleString('en-US'); }
+function fmtDelta(x){ const n=Math.round(num(x)); return (n>0?'+':'')+n.toLocaleString('en-US'); }
+function fmtPct(r){ return (num(r)*100).toFixed(1)+'%'; }
+function ratePct(r){ return Math.max(0,Math.min(100,Math.round(num(r)*100))); }
+function barPct(v,max){ const m=num(max); if(m<=0)return 0; return Math.max(2,Math.min(100,Math.round(num(v)/m*100))); }
+
+function parseLevel(text){
+  const t = String(text||'');
+  if(t.includes('问鼎巅峰')||t.includes('聚力乘风')) return 'top';
+  if(t.includes('全力以赴')) return 'high';
+  if(t.includes('稳步进阶')) return 'mid';
+  if(t.includes('达标起步')) return 'low';
+  return 'none';
+}
+function tierClass(tier){
+  const t = String(tier||'');
+  if(t.includes('3w')) return 'tier-3w';
+  if(t.includes('2w')) return 'tier-2w';
+  if(t.includes('1w')) return 'tier-1w';
+  return 'tier-other';
+}
+// 关键词模糊匹配：门店名称 / poi_id / BD 销售名称
+function matchKw(r){
+  const kw = state.kw.trim().toLowerCase();
+  if(!kw) return true;
+  const name = String(r.poiName||'').toLowerCase();
+  const pid = String(r.poiId||'').toLowerCase();
+  const bd = String(r.bd||'').toLowerCase();
+  return name.includes(kw) || pid.includes(kw) || bd.includes(kw);
+}
+// 各 Tab 搜索配置：提示文字 + 输入框 placeholder
+const SEARCH_CFG = {
+  detail:    { hint: '可搜索：门店名称 / poi_id / BD姓名', ph: '搜索门店名称 / poi_id / BD姓名' },
+  summary:   { hint: '可搜索：BDM名称 / 小组名称',        ph: '搜索 BDM / 小组名称（如 烟台-2）' },
+  highsales: { hint: '可搜索：门店名称 / poi_id / BD姓名', ph: '搜索门店名称 / poi_id / BD姓名' }
+};
+function updateSearchHint(){
+  const cfg = SEARCH_CFG[state.tab] || SEARCH_CFG.detail;
+  document.getElementById('search-hint').textContent = cfg.hint;
+  document.getElementById('f-kw').placeholder = cfg.ph;
+}
+
+// ---- 初始化筛选项 ----
+function initFilters(){
+  const bdmSet = new Set(), bdSet = new Set();
+  STORE_DATA.forEach(r => { if(r.bdm) bdmSet.add(r.bdm); if(r.bd) bdSet.add(r.bd); });
+  const bdmList = [...bdmSet].sort();
+  const bdList = [...bdSet].sort();
+  fillSelect('f-bdm', bdmList);
+  fillSelect('f-bd', bdList);
+  fillSelect('f-group', bdmList); // 该看板小组=BDM 字段
+}
+function fillSelect(id, list){
+  const el = document.getElementById(id);
+  el.innerHTML = '<option value="">全部</option>' + list.map(v=>`<option value="${v}">${v}</option>`).join('');
+}
+
+function onFilter(){
+  state.bdm = document.getElementById('f-bdm').value;
+  state.bd = document.getElementById('f-bd').value;
+  state.group = document.getElementById('f-group').value;
+  ['f-bdm','f-bd','f-group'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.toggle('active', !!el.value);
+  });
+  render();
+}
+function resetFilter(){
+  state.bdm=state.bd=state.group='';
+  ['f-bdm','f-bd','f-group'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).classList.remove('active'); });
+  render();
+}
+function switchTab(tab){
+  state.tab = tab;
+  document.getElementById('tab-detail').classList.toggle('on', tab==='detail');
+  document.getElementById('tab-summary').classList.toggle('on', tab==='summary');
+  document.getElementById('tab-highsales').classList.toggle('on', tab==='highsales');
+  updateSearchHint();
+  render();
+}
+function onSearch(){
+  state.kw = document.getElementById('f-kw').value || '';
+  document.getElementById('search-bar').classList.toggle('has-kw', !!state.kw.trim());
+  render();
+}
+function clearSearch(){
+  state.kw = '';
+  document.getElementById('f-kw').value = '';
+  document.getElementById('search-bar').classList.remove('has-kw');
+  render();
+}
+
+// ---- 渲染 ----
+function render(){
+  if(state.tab==='detail') renderDetail();
+  else if(state.tab==='summary') renderSummary();
+  else renderHighsales();
+}
+
+function renderDetail(){
+  let list = STORE_DATA.filter(r=>{
+    if(state.bdm && r.bdm!==state.bdm) return false;
+    if(state.bd && r.bd!==state.bd) return false;
+    if(state.group && r.bdm!==state.group) return false;
+    if(!matchKw(r)) return false;
+    return true;
+  });
+  list = list.slice().sort((a,b)=>num(b.today)-num(a.today));
+  const max = list.reduce((m,r)=>Math.max(m,num(r.today)),0);
+  document.getElementById('count-row').textContent = `共 ${list.length} 家门店（按今日扫码降序）`;
+  const box = document.getElementById('list');
+  if(!list.length){ box.innerHTML='<div class="empty">暂无符合条件的门店</div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const lv = parseLevel(r.standard);
+    const up = num(r.delta)>0, down = num(r.delta)<0;
+    return `<div class="card">
+      <div class="card-head">
+        <span class="poi-name">${r.poiName}</span>
+        <span class="tag level-${lv}">${r.standard||'-'}</span>
+      </div>
+      <div class="sub-row">
+        <span class="sub">${r.bdm||''}</span><span class="dot">·</span>
+        <span class="sub">${r.bd||''}</span><span class="dot">·</span>
+        <span class="sub">${r.category||''}</span>
+        <span class="sub count-type">${r.countType||''}</span>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-fill" style="width:${barPct(r.today,max)}%"></div></div>
+        <span class="bar-num">${fmtInt(r.today)}</span>
+      </div>
+      <div class="kv-row">
+        <div class="kv"><span class="kv-label">昨日同期</span><span class="kv-val">${fmtInt(r.yesterday)}</span></div>
+        <div class="kv"><span class="kv-label">增减量</span><span class="kv-val ${up?'up':''} ${down?'down':''}">${fmtDelta(r.delta)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSummary(){
+  let list = SUMMARY_DATA.filter(r=>{
+    const g = state.group || state.bdm;
+    if(g && r.group!==g) return false;
+    const kw = state.kw.trim().toLowerCase();
+    if(kw && !String(r.group||'').toLowerCase().includes(kw)) return false;
+    return true;
+  });
+  list = list.slice().sort((a,b)=>num(b.standardStores)-num(a.standardStores));
+  document.getElementById('count-row').textContent = `共 ${list.length} 个小组（按达标门店数降序）`;
+  const box = document.getElementById('list');
+  if(!list.length){ box.innerHTML='<div class="empty">暂无符合条件的小组</div>'; return; }
+  box.innerHTML = list.map(r=>{
+    const up = num(r.delta)>0, down = num(r.delta)<0;
+    return `<div class="card">
+      <div class="card-head">
+        <span class="poi-name">${r.group}</span>
+        <span class="grp-stores">${r.storeCount} 家门店</span>
+      </div>
+      <div class="metric-line">
+        <span class="metric-label">扫码动销率</span>
+        <div class="bar-track sm"><div class="bar-fill purple" style="width:${ratePct(r.activeRate)}%"></div></div>
+        <span class="metric-val">${fmtPct(r.activeRate)}</span>
+      </div>
+      <div class="metric-line">
+        <span class="metric-label">达标占比</span>
+        <div class="bar-track sm"><div class="bar-fill" style="width:${ratePct(r.standardRate)}%"></div></div>
+        <span class="metric-val">${fmtPct(r.standardRate)}</span>
+      </div>
+      <div class="grid">
+        <div class="grid-cell"><span class="g-num">${r.activeStores}</span><span class="g-label">动销门店</span></div>
+        <div class="grid-cell"><span class="g-num">${r.standardStores}</span><span class="g-label">达标门店</span></div>
+        <div class="grid-cell"><span class="g-num">${fmtInt(r.today)}</span><span class="g-label">今日扫码</span></div>
+        <div class="grid-cell"><span class="g-num ${up?'up':''} ${down?'down':''}">${fmtDelta(r.delta)}</span><span class="g-label">环比增量</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderHighsales(){
+  let list = HIGHSALES_DATA.filter(r=>{
+    if(state.bdm && r.bdm!==state.bdm) return false;
+    if(state.bd && r.bd!==state.bd) return false;
+    if(state.group && r.bdm!==state.group) return false;
+    if(!matchKw(r)) return false;
+    return true;
+  });
+  list = list.slice().sort((a,b)=>num(b.today)-num(a.today));
+  const max = list.reduce((m,r)=>Math.max(m,num(r.today)),0);
+  document.getElementById('count-row').textContent = `共 ${list.length} 家高销门店（按今日扫码降序）`;
+  const box = document.getElementById('list');
+  if(!list.length){ box.innerHTML='<div class="empty">暂无符合条件的高销门店</div>'; return; }
+  box.innerHTML = list.map(r=>{
+    return `<div class="card">
+      <div class="card-head">
+        <span class="poi-name">${r.poiName}</span>
+        <span class="tier ${tierClass(r.tier)}">${r.tier||'-'}</span>
+      </div>
+      <div class="sub-row">
+        <span class="sub">${r.bdm||''}</span><span class="dot">·</span>
+        <span class="sub">${r.bd||''}</span>
+        <span class="sub count-type">${r.countType||''}</span>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-fill purple" style="width:${barPct(r.today,max)}%"></div></div>
+        <span class="bar-num">${fmtInt(r.today)}</span>
+      </div>
+      <div class="kv-row">
+        <div class="kv"><span class="kv-label">核销poi_id</span><span class="kv-val" style="font-size:11px;color:var(--text-3)">${r.poiId}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---- 城市配置（各城市对应的 Aeolus 看板参数；mock 演示阶段共用同一份数据）----
+const CITIES = [
+  { name: '烟台', dashboardId: 1689148, appId: 1000821, sheetId: 2488839 },
+  { name: '济宁', dashboardId: 1724912, appId: 1000821, sheetId: 2490954 },
+  { name: '临沂', dashboardId: 1724965, appId: 1000821, sheetId: 2491047 },
+  { name: '济南', dashboardId: 1724918, appId: 1000821, sheetId: 2490964 },
+  { name: '潍坊', dashboardId: 1724920, appId: 1000821, sheetId: 2490968 },
+  { name: '青岛', dashboardId: 1724925, appId: 1000821, sheetId: 2490979 }
+];
+let currentCity = null;
+
+function renderCityGrid(){
+  document.getElementById('city-grid').innerHTML = CITIES.map((c,i)=>`
+    <div class="city-card" onclick="selectCity(${i})">
+      <div class="c-top">
+        <span class="c-dot">${c.name.charAt(0)}</span>
+        <span class="c-name">${c.name}</span>
+      </div>
+      <div class="c-meta">看板 ${c.dashboardId}<br/>sheet ${c.sheetId}</div>
+      <div class="c-go">进入查询 ›</div>
+    </div>`).join('');
+}
+function selectCity(i){
+  currentCity = CITIES[i];
+  document.getElementById('nav-title').textContent = `${currentCity.name} · 扫码进展`;
+  document.getElementById('nav-back').classList.remove('hide');
+  document.getElementById('screen-city').style.display = 'none';
+  document.getElementById('screen-query').style.display = 'block';
+  // 重置筛选与搜索，回到默认 Tab
+  resetFilter();
+  clearSearch();
+  switchTab('detail');
+  document.getElementById('screen-query').scrollTop = 0;
+  // 真实接入时：按 currentCity.dashboardId / appId / sheetId 调用后端代理取数
+}
+function backToCity(){
+  document.getElementById('screen-query').style.display = 'none';
+  document.getElementById('screen-city').style.display = 'block';
+  document.getElementById('nav-title').textContent = '店员蜜蜂扫码进展';
+  document.getElementById('nav-back').classList.add('hide');
+}
+
+// ---- 启动 ----
+document.getElementById('notice').textContent = NOTICE;
+const now = new Date();
+const p = n => n<10?'0'+n:''+n;
+document.getElementById('meta-time').textContent = `更新于 ${now.getMonth()+1}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`;
+initFilters();
+updateSearchHint();
+render();
+renderCityGrid();
+document.getElementById('nav-back').classList.add('hide'); // 首页（城市选择）隐藏返回按钮
+</script>
+</body>
+</html>
